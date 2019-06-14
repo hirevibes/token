@@ -89,9 +89,8 @@ void token::transfer( name    from,
                       asset   quantity,
                       string  memo )
 {
-    auto blacklist = "hvtstakingco"_n;
-    check( from != blacklist, "you are not allowed to perform this operation");
-    check( to != blacklist, "to account is in black list");
+    check(is_blacklisted(_self, from), "account in blacklist");
+    check(is_blacklisted(_self, to), "account in blacklist");
 
     check( from != to, "cannot transfer to self" );
     require_auth( from );
@@ -169,6 +168,24 @@ void token::close( name owner, const symbol& symbol )
    acnts.erase( it );
 }
 
+void token::setblacklist (name account, string reason)
+{
+   blacklist_index blacklist_table(_self, _self.value);
+   auto itr = blacklist_table.find(account.value);
+   check(itr == blacklist_table.end(), "account is in blacklist");
+   blacklist_table.emplace( _self, [&](auto& b ) {
+      b.account = account;
+   });
+}
+
+void token::delblacklist (name account, string reason)
+{
+   blacklist_index blacklist_table(_self, _self.value);
+   auto itr = blacklist_table.find(account.value);
+   check(itr != blacklist_table.end(), "account is not in blacklist");
+   blacklist_table.erase(itr);
+}
+
 } /// namespace eosio
 
-EOSIO_DISPATCH( eosio::token, (create)(issue)(transfer)(open)(close)(retire) )
+EOSIO_DISPATCH( eosio::token, (create)(issue)(transfer)(open)(close)(retire)(setblacklist)(delblacklist) )

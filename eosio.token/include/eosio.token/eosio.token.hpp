@@ -43,6 +43,12 @@ namespace eosio {
          [[eosio::action]]
          void close( name owner, const symbol& symbol );
 
+         [[eosio::action]]
+         void setblacklist ( name account, string reason );
+
+         [[eosio::action]]
+         void delblacklist ( name account, string reason );
+
          static asset get_supply( name token_contract_account, symbol_code sym_code )
          {
             stats statstable( token_contract_account, sym_code.raw() );
@@ -57,12 +63,19 @@ namespace eosio {
             return ac.balance;
          }
 
+         static const bool is_blacklisted (name owner, const name account) {
+            blacklist_index blacklist_table(owner, owner.value);
+            auto itr = blacklist_table.find(account.value);
+            return itr == blacklist_table.end();
+         }
+
          using create_action = eosio::action_wrapper<"create"_n, &token::create>;
          using issue_action = eosio::action_wrapper<"issue"_n, &token::issue>;
          using retire_action = eosio::action_wrapper<"retire"_n, &token::retire>;
          using transfer_action = eosio::action_wrapper<"transfer"_n, &token::transfer>;
          using open_action = eosio::action_wrapper<"open"_n, &token::open>;
          using close_action = eosio::action_wrapper<"close"_n, &token::close>;
+
       private:
          struct [[eosio::table]] account {
             asset    balance;
@@ -80,6 +93,14 @@ namespace eosio {
 
          typedef eosio::multi_index< "accounts"_n, account > accounts;
          typedef eosio::multi_index< "stat"_n, currency_stats > stats;
+
+         struct [[eosio::table]] blacklist {
+            name account;
+
+            uint64_t primary_key() const { return account.value; }
+            EOSLIB_SERIALIZE(blacklist, (account))
+         };
+         typedef multi_index<"blacklist"_n, blacklist> blacklist_index;
 
          void sub_balance( name owner, asset value );
          void add_balance( name owner, asset value, name ram_payer );
