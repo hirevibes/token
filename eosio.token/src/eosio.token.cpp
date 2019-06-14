@@ -170,6 +170,7 @@ void token::close( name owner, const symbol& symbol )
 
 void token::setblacklist (name account, string reason)
 {
+   require_auth(_self);
    blacklist_index blacklist_table(_self, _self.value);
    auto itr = blacklist_table.find(account.value);
    check(itr == blacklist_table.end(), "account is in blacklist");
@@ -180,6 +181,7 @@ void token::setblacklist (name account, string reason)
 
 void token::delblacklist (name account, string reason)
 {
+   require_auth(_self);
    blacklist_index blacklist_table(_self, _self.value);
    auto itr = blacklist_table.find(account.value);
    check(itr != blacklist_table.end(), "account is not in blacklist");
